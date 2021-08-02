@@ -1,14 +1,23 @@
 import os
 
 from dhooks import Webhook, Embed
+import sqlalchemy as db
+from database.courses import CoursesTable
 
 from sites.course_scorpion import CourseScorpion
+from sites.udemy_coupons_me import UdemyCoupons
 from models.course import Course
+from database.courses import CoursesTable
 
 
 WEBHOOK_URL = os.environ['udemy_discord_webhook']
 
-course_scorpion = CourseScorpion(pages_to_scrape=2)
+# setup DB
+db_connection = CoursesTable()
+
+# get course classes
+#course_scorpion = CourseScorpion(pages_to_scrape=2)
+udemy_coupons_me = UdemyCoupons(num_of_courses=20)
 
 
 def createDiscordEmbed(course: Course):
@@ -25,16 +34,12 @@ def createDiscordEmbed(course: Course):
     hook.send(embed=course_embed)
 
 
-# TODO Parse the Udemy URL and remove any 'ad' or 'campaign' references
-# TODO Add the courses to a DB so that they don't get posted multiple times
-# TODO Add other sites
+udemy_coupons_me_courses = udemy_coupons_me.find_courses()
 
-url = 'https://couponscorpion.com/business/istqb-foundation-level-ctfl-training-for-2021-1000-quiz/'
-course = Course(
-    title = course_scorpion.get_course_title(url),
-    description = course_scorpion.get_course_description(url),
-    image_url = course_scorpion.get_course_image(url),
-    store_url = course_scorpion.get_udemy_link(url)
-)
-#courses = course_scorpion.find_courses()
-createDiscordEmbed(course)
+
+for course in udemy_coupons_me_courses:
+    if not db_connection.is_already_in_db(course.title):
+        db_connection.insert_course(course)
+        createDiscordEmbed(course)
+    else:
+        print(f"[-] {course.title} is already in the DB. Skipping...")
