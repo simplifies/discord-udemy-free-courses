@@ -1,7 +1,6 @@
 import os
 
 from dhooks import Webhook, Embed
-import sqlalchemy as db
 from database.courses import CoursesTable
 
 from sites.course_scorpion import CourseScorpion
@@ -10,7 +9,7 @@ from models.course import Course
 from database.courses import CoursesTable
 
 
-WEBHOOK_URL = os.environ['udemy_discord_webhook']
+WEBHOOK_URL = os.environ['free_udemy_courses_discord_webhook']
 
 # setup DB
 db_connection = CoursesTable()
